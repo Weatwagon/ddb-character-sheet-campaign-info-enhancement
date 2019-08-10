@@ -1,9 +1,15 @@
 // ==UserScript==
 // @name         ddb-my-campaign-stats
+// @namespace    https://github.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement
+// @version      2.0.5
+// @description  New campaing info side panel with expandable character stats
+// @author       Weatwagon orignal project by Mivalsten
 // @match        https://www.dndbeyond.com/profile/*/characters/*
 // @grant        none
 // ==/UserScript==
 //
+
+
 var $ = window.jQuery;
 
 class Character {
@@ -198,7 +204,7 @@ function appySytle(){
     )
     GM_addStyle(
         `.bar {
-            background: #c54;
+            background: hsl(120,100%,50%);
             width: 100%;
             height: 18px;
             position: relative;
@@ -221,6 +227,12 @@ function appySytle(){
         `
     )
     
+}
+
+function getColor(value){
+    //value from 0 to 1
+    var hue=((value)*120).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
 }
 
 function observerAndApply(id,element, action, keepAlive = function(){return false;}){
@@ -312,7 +324,7 @@ function render(character, index, value) {
                 ">
             </div>
             
-            <div id="health-bar-`+character.id+`" class="health-bar" data-total="`+character.currentHP+`" data-value="`+character.maxHP+`">
+            <div id="health-bar-`+character.id+`" class="health-bar" data-total="`+character.maxHP+`" data-value="`+character.currentHP+`">
                 <div style="
                     position: absolute;
                     z-index: 8;
@@ -320,8 +332,8 @@ function render(character, index, value) {
                     text-align: center;
                     /* margin: 10px; */
                 ">
-                    <span id="current-`+character.id+`">`+character.currentHP+`</span>/
-                    <span id="total-`+character.id+`">`+character.maxHP+`</span>&nbsp;HP
+                    <span class="current-hp">`+character.currentHP+`</span>/
+                    <span class="total-hp">`+character.maxHP+`</span>&nbsp;HP
                 </div>
                 <div class="bar">
                     <div class="hit"></div>
@@ -393,6 +405,13 @@ function render(character, index, value) {
     $('#stats-button-'+character.id).click(function(){
         $('#'+tableId).toggle();
     });
+
+    hBar = $('#health-bar-'+character.id);
+    hBar.on('update:bar',setBar)
+    hBar.trigger('update:bar',[0]);
+    
+
+
 }
 
 function renderLeftCampaign(campaign) {
@@ -436,6 +455,48 @@ function renderLeftCampaign(campaign) {
     `;
     
     $('.ct-sidebar__mask').after(leftSide);   
+}
+
+function setBar(event, damage){    
+    var hBar = $(this), 
+      bar = hBar.find('.bar'),
+      hit = hBar.find('.hit'),
+      total = hBar.data('total'),
+      value = hBar.data('value'),
+      hpCurrent=hBar.find('.current-hp'),
+      hpTotal=hBar.find('.total-hp');
+    
+    console.log("Setting bar ", hBar);     
+    
+    if (value < 0) {
+      console.log("you dead, reset");
+      return;
+    }   
+    
+    var newValue = value - damage;    
+    // calculate the percentage of the total width
+    var barWidth = (newValue / total) * 100;
+    var hitWidth = (damage / value) * 100 + "%";
+    
+    // show hit bar and set the width
+    hit.css('width', hitWidth);
+    hBar.data('value', newValue);
+    
+    setTimeout(function(){
+      hit.css({'width': '0'});
+      bar.css('width', barWidth + "%");
+
+      //set color based on width
+      bar.css('background',getColor(barWidth/100));
+
+      //set text
+      hpCurrent.text(newValue);
+
+    }, 500);
+        
+    if( value < 0){
+      console.log("DEAD");
+    }
 }
 
 (function () {
