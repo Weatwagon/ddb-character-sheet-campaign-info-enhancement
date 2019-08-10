@@ -5,11 +5,10 @@
 // @description  New campaing info side panel with expandable character stats
 // @author       Weatwagon orignal project by Mivalsten
 // @match        https://www.dndbeyond.com/profile/*/characters/*
+// @license      MIT; https://github.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement/blob/master/LICENSE
 // @grant        none
 // ==/UserScript==
 //
-
-
 var $ = window.jQuery;
 
 class Character {
