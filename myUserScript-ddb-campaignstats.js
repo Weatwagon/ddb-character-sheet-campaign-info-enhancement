@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ddb-my-campaign-stats
 // @namespace    https://github.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement
-// @version      2.0.5
+// @version      2.0.6
 // @description  New campaing info side panel with expandable character stats
 // @author       Weatwagon orignal project by Mivalsten
 // @match        https://www.dndbeyond.com/profile/*/characters/*
