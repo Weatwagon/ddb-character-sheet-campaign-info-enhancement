@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ddb-my-campaign-stats
 // @namespace    https://github.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement
-// @version      2.0.9
+// @version      2.0.10
 // @description  New campaing info side panel with expandable character stats
 // @author       Weatwagon orignal project by Mivalsten
 // @match        https://www.dndbeyond.com/profile/*/characters/*
@@ -11,9 +11,16 @@
 //
 var $ = window.jQuery;
 
+window.campaignStatsCharacters = undefined;
+window.campaignStatsCharactersData = {};
+window.campaignStatsClassCharacters = {};
+
 class Character {
-    constructor(name) {
+    constructor(name, characterId) {
         this.name = name;
+        this.characterId = characterId;        
+        this.getData();
+        window.campaignStatsClassCharacters[this.characterId] = this ;
     };
     get level() {
         var classes = this.iframe.find('.ct-character-tidbits__classes').text().split('/').map(function (i) { return parseInt(i.replace(/[^0-9]+/g, '')) });
@@ -36,7 +43,25 @@ class Character {
     }
 
     get currentHP() {
-        return parseInt(this.iframe.find(".ct-status-summary-mobile__hp-current").text());
+        let hpParsed = parseInt(this.iframe.find(".ct-status-summary-mobile__hp-current").text());       
+        if(this.data != undefined){
+            if (!isNaN(this.data.removedHitPoints)) {
+                return this.maxHP - this.data.removedHitPoints;                
+            }
+        }else{
+            return hpParsed;
+        }
+    }
+
+    get data(){
+        return window.campaignStatsCharactersData[this.characterId].data
+    }
+    
+    getData(){
+        $.get('https://www.dndbeyond.com/character/'+ this.characterId + '/json', function (data) { 
+            console.log('Character Data Loaded '+ data.id, data);
+            window.campaignStatsCharactersData[data.id] = { 'data': data} ;
+        }, 'json');
     }
 
     get maxHP() {
@@ -56,6 +81,10 @@ class Character {
     get passiveInvestigation() {
         var selector = ".ct-senses .ct-senses__callout:has(.ct-senses__callout-label:contains(Investigation))";
         return parseInt(this.iframe.find(selector).find(".ct-senses__callout-value").text());
+    }
+
+    refreshData(){
+        
     }
 
     get stats() {
@@ -273,6 +302,7 @@ function prerender(character, index, value,  times) {
 }
 
 function render(character, index, value) {
+    character.getData()
     var tableId = `character-details-${character.id}`;
 
     var prefix = '<div class="campaign-character-wrapper"><div class="campaign-character-card"><div class="card-header ct-campaign-pane__character">'
@@ -445,7 +475,7 @@ function renderLeftCampaign(campaign) {
                             <div class="ct-campaign-pane__dm"><span class="ct-campaign-pane__dm-label">DM:</span><span
                                     class="ct-campaign-pane__dm-user">`+ campaign.dmUsername +`</span></div>
                             <div class="ct-campaign-pane__characters" style="text-align: center;">  
-                            <img id="campaign-stats-loader" src="https://raw.githubusercontent.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement/master/loading-ring.gif" 
+                            <img id="campaign-stats-loader" src="https://raw.githubusercontent.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement/master/loading-ring.gif?sanatize=true" 
                             style="
                                 height: 120px;                                
                             ">                              
@@ -465,7 +495,8 @@ function renderLeftCampaign(campaign) {
             console.log("value", value);
             
             let name = value.characterName;
-            let character = new Character(name);
+            let characterId = value.characterId
+            let character = new Character(name, characterId);
             let newIframe = document.createElement('iframe');
             //after loading iframe, wait for a second to let JS create content.
             newIframe.onload = function(){prerender(character, index,value, 0)};
@@ -530,6 +561,7 @@ function setBar(event, damage){
     // get json data from current character URL
     // TODO: make sure valid url for the /json call
     $.get(location.href + '/json', function (data) { console.log('Data Loaded', data); }, 'json').done(function (data) {
+        window.campaignStatsCharacters = data.character.campaign.characters;
         // wait for page to render and add side pannel
         observerAndApply("Load Campaign Panel",'.ct-sidebar__mask',function(){
             renderLeftCampaign(data.character.campaign);
