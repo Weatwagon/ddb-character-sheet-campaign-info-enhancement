@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ddb-my-campaign-stats
 // @namespace    https://github.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement
-// @version      2.0.8
+// @version      2.0.9
 // @description  New campaing info side panel with expandable character stats
 // @author       Weatwagon orignal project by Mivalsten
 // @match        https://www.dndbeyond.com/profile/*/characters/*
@@ -378,6 +378,7 @@ function render(character, index, value) {
     </tr>
   `;
 
+    $('#campaign-stats-loader').hide();
     $('#mySideBar .ct-campaign-pane__characters').after(div);
     var footer = $(`#${tableId} > tbody:last-child`);
     for (var s in character.stats) {
@@ -443,7 +444,11 @@ function renderLeftCampaign(campaign) {
                             </div>
                             <div class="ct-campaign-pane__dm"><span class="ct-campaign-pane__dm-label">DM:</span><span
                                     class="ct-campaign-pane__dm-user">`+ campaign.dmUsername +`</span></div>
-                            <div class="ct-campaign-pane__characters">                                
+                            <div class="ct-campaign-pane__characters" style="text-align: center;">  
+                            <img id="campaign-stats-loader" src="https://raw.githubusercontent.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement/master/loading-ring.gif" 
+                            style="
+                                height: 120px;                                
+                            ">                              
                             </div>
                         </div>
                     </div>
