@@ -267,6 +267,10 @@ function prerender(character, index, value,  times) {
     if (!isNaN(character.ac)) { render(character, index, value); }
     else {
         times += 1;
+        console.log('Times: ' + tiems);
+        console.log(character);
+        console.log(index);
+        console.log(value);
         if (times < 80) { setTimeout(function () { prerender(character, index, value, times); }, 500); };
     }
 }
