@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ddb-my-campaign-stats
 // @namespace    https://github.com/Weatwagon/ddb-character-sheet-campaign-info-enhancement
-// @version      2.0.7
+// @version      2.0.8
 // @description  New campaing info side panel with expandable character stats
 // @author       Weatwagon orignal project by Mivalsten
 // @match        https://www.dndbeyond.com/profile/*/characters/*
@@ -264,13 +264,10 @@ function observerAndApply(id,element, action, keepAlive = function(){return fals
 }
 
 function prerender(character, index, value,  times) {
-    if (!isNaN(character.ac)) { render(character, index, value); }
+    console.log('PreRender: Times: ' + times, character);
+    if (!isNaN(character.ac)) { console.log('PreRender: Pass Character AC: ' + character.ac, character);;render(character, index, value); }
     else {
-        times += 1;
-        console.log('Times: ' + times);
-        console.log(character);
-        console.log(index);
-        console.log(value);
+        times += 1;       
         if (times < 80) { setTimeout(function () { prerender(character, index, value, times); }, 500); };
     }
 }
@@ -458,6 +455,25 @@ function renderLeftCampaign(campaign) {
     `;
     
     $('.ct-sidebar__mask').after(leftSide);   
+    campaign.characters.each(function (value, index) {
+            console.log("index", index);
+            console.log("value", value);
+            
+            let name = value.characterName;
+            let character = new Character(name);
+            let newIframe = document.createElement('iframe');
+            //after loading iframe, wait for a second to let JS create content.
+            newIframe.onload = function(){prerender(character, index,value, 0)};
+            newIframe.id = `frame-${character.id}`;
+            newIframe.style = "position: absolute;"; //visibility: hidden;
+            newIframe.width = 1000;
+            newIframe.height = 1;
+            newIframe.seamless = "";
+            //newIframe.src = node.attr('href');
+            newIframe.src = "https://dndbeyond.com/characters/" + value.characterId;
+            document.body.appendChild(newIframe);
+            $('#iframeDiv').append(newIframe);
+        })
 }
 
 function setBar(event, damage){    
@@ -514,24 +530,8 @@ function setBar(event, damage){
             renderLeftCampaign(data.character.campaign);
         });
        
-        data.character.campaign.characters.each(function (value, index) {
-            console.log("index", index);
-            console.log("value", value);
-            
-            let name = value.characterName;
-            let character = new Character(name);
-            let newIframe = document.createElement('iframe');
-            //after loading iframe, wait for a second to let JS create content.
-            newIframe.onload = function(){prerender(character, index,value, 0)};
-            newIframe.id = `frame-${character.id}`;
-            newIframe.style = "position: absolute;"; //visibility: hidden;
-            newIframe.width = 1000;
-            newIframe.height = 1;
-            newIframe.seamless = "";
-            //newIframe.src = node.attr('href');
-            newIframe.src = "https://dndbeyond.com/characters/" + value.characterId;
-            document.body.appendChild(newIframe);
-            $('#iframeDiv').append(newIframe);
-        })
+        // Moved to after side bar is loaded
+        // data.character.campaign.characters.each(function (value, index) {....
+        
     });
 })();
